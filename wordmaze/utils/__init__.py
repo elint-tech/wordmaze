@@ -1,0 +1,1 @@
+import wordmaze.utils.dataclasses

@@ -1,0 +1,2 @@
+dataclassy==0.8.2
+funcy==1.15
