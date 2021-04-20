@@ -37,7 +37,7 @@ class Page(MutableSequence[TextBox]):
     def __init__(
             self,
             shape: Shape,
-            entries: Iterable[TextBox],
+            entries: Iterable[TextBox] = (),
             origin: Origin = Origin.TOP_LEFT
     ) -> None:
         self.shape: Shape = shape
@@ -101,7 +101,7 @@ class Page(MutableSequence[TextBox]):
 
 
 class WordMaze(MutableSequence[Page]):
-    def __init__(self, pages: Iterable[Page]) -> None:
+    def __init__(self, pages: Iterable[Page] = ()) -> None:
         self._pages: List[Page] = list(pages)
 
     def __str__(self) -> str:
