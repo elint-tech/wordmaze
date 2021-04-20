@@ -128,14 +128,14 @@ class WordMaze(MutableSequence[Page]):
 
     def tuples(self) -> Iterable[tuple]:
         return (
-            (number, *tpl)
+            (number,) + tpl
             for number, page in enumerate(self)
             for tpl in page.tuples()
         )
 
     def dicts(self) -> Iterable[dict]:
         return (
-            {**{'page': number}, **dct}
+            dict(dct, page=number)
             for number, page in enumerate(self)
             for dct in page.dicts()
         )
