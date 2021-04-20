@@ -1,8 +1,10 @@
+import enum
 from functools import partial
 from numbers import Real
 from typing import Iterable, List, MutableSequence, Tuple
 
 from dataclassy import dataclass
+from dataclassy.functions import replace
 
 from wordmaze.utils.dataclasses import as_dict, as_tuple
 
@@ -26,14 +28,21 @@ class Shape:
     width: Real
 
 
+class Origin(enum.Enum):
+    TOP_LEFT = enum.auto()
+    BOTTOM_LEFT = enum.auto()
+
+
 class Page(MutableSequence[TextBox]):
     def __init__(
             self,
             shape: Shape,
             entries: Iterable[TextBox],
+            origin: Origin = Origin.TOP_LEFT
     ) -> None:
         self.shape: Shape = shape
         self._entries: List[TextBox] = list(entries)
+        self.origin = origin
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}({self._entries})'
@@ -63,6 +72,31 @@ class Page(MutableSequence[TextBox]):
         return map(
             partial(as_dict, flatten=True),
             self
+        )
+
+    def rebased(self, origin: Origin) -> 'Page':
+        if origin is self.origin:
+            return self
+        elif (
+            (origin is Origin.BOTTOM_LEFT and self.origin is Origin.TOP_LEFT)
+            or (origin is Origin.TOP_LEFT and self.origin is Origin.BOTTOM_LEFT)
+        ):
+            def rebaser(textbox: TextBox) -> TextBox:
+                return replace(
+                    textbox,
+                    y1=self.shape.height - textbox.y2,
+                    y2=self.shape.height - textbox.y1
+                )
+        else:
+            raise NotImplementedError(
+                'unsupported rebase operation:'
+                f' from {self.origin} to {origin}.'
+            )
+
+        return Page(
+            shape=self.shape,
+            origin=origin,
+            entries=map(rebaser, self)
         )
 
 
