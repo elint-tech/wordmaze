@@ -9,7 +9,7 @@ from dataclassy.functions import replace
 from wordmaze.utils.dataclasses import as_dict, as_tuple
 
 
-@dataclass(frozen=True, iter=True)
+@dataclass(iter=True, kwargs=True)
 class Box:
     x1: Real
     x2: Real
@@ -22,7 +22,7 @@ class TextBox(Box):
     confidence: Real
 
 
-@dataclass(frozen=True, iter=True)
+@dataclass(iter=True)
 class Shape:
     height: Real
     width: Real
