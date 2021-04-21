@@ -20,4 +20,6 @@ Install from [PyPI](https://pypi.org/project/wordmaze/):
 pip install wordmaze
 ```
 
-- TODO: add "Projects using WordMaze" section after `pdfmap` completes its integration.
+# Projects using WordMaze
+
+* [`pdfmap`](https://github.com/elint-tech/pdfmap)

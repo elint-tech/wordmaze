@@ -34,7 +34,9 @@ setup(
         'words',
         'text',
         'textbox',
-        'textboxes'
+        'textboxes',
+        'text-mining',
+        'text-mining-analysis'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
