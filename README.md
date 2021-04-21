@@ -22,4 +22,4 @@ pip install wordmaze
 
 # Projects using WordMaze
 
-* [`pdfmap`](https://github.com/elint-tech/pdfmap)
+* [elint-tech/pdfmap](https://github.com/elint-tech/pdfmap): easily extract textboxes from PDF files.
