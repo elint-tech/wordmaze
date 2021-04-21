@@ -1,2 +1,23 @@
-# wordmaze
-Handle text boxes the right way.
+WordMaze
+[![PyPI version fury.io](https://img.shields.io/pypi/v/wordmaze?color=blue)](https://github.com/elint-tech/wordmaze)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/wordmaze)](https://github.com/elint-tech/wordmaze)
+===
+
+*Words and textboxes made amazing.*
+
+# About
+
+- TODO: write About section
+
+# Usage
+
+- TODO: write Usage section
+
+# Installing
+
+Install from [PyPI](https://pypi.org/project/wordmaze/):
+```
+pip install wordmaze
+```
+
+- TODO: add "Projects using WordMaze" section after `pdfmap` completes its integration.
