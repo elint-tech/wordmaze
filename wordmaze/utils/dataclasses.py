@@ -6,6 +6,8 @@ import funcy
 from dataclassy import DataClass, asdict, astuple, values
 from dataclassy.functions import is_dataclass_instance, replace
 
+from wordmaze.utils.sequences import MutableSequence
+
 _DataClass = TypeVar('_DataClass', bound=DataClass)
 
 
@@ -126,3 +128,35 @@ def field_pred(
 
     return _pred
 
+
+class DataClassSequence(MutableSequence[_DataClass]):
+    def __init__(self, entries: Iterable[_DataClass] = ()) -> None:
+        super().__init__(entries)
+
+    def tuples(self) -> Iterable[tuple]:
+        return map(
+            partial(as_tuple, flatten=True),
+            self
+        )
+
+    def dicts(self) -> Iterable[dict]:
+        return map(
+            partial(as_dict, flatten=True),
+            self
+        )
+
+    def map(
+            self,
+            *mapper: Callable[[_DataClass], _DataClass],
+            **field_mappers: Callable[[Any], Any]
+    ) -> Iterable[_DataClass]:
+        _mapper = field_mapper(*mapper, **field_mappers)
+        return map(_mapper, self)
+
+    def filter(
+            self,
+            *pred: Callable[[_DataClass], bool],
+            **field_preds: Callable[[Any], bool]
+    ) -> Iterable[_DataClass]:
+        _pred = field_pred(*pred, **field_preds)
+        return filter(_pred, self)

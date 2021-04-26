@@ -2,8 +2,8 @@ import pytest
 from dataclassy import dataclass
 
 from wordmaze import TextBox
-from wordmaze.utils.dataclasses import (as_dict, as_tuple, field_mapper,
-                                        field_pred)
+from wordmaze.utils.dataclasses import (DataClassSequence, as_dict, as_tuple,
+                                        field_mapper, field_pred)
 
 
 def test_as_dict():
@@ -158,3 +158,31 @@ def test_field_pred():
             confidence=lambda conf: conf > 5,
             text=lambda txt: len(txt) > 5
         )
+
+
+def test_DataClassSequence():
+    @dataclass
+    class Example:
+        i: int
+        s: str
+
+    class Examples(DataClassSequence[Example]):
+        pass
+
+    examples = Examples([
+        Example(i=0, s='zero'),
+        Example(i=1, s='one')
+    ])
+
+    assert Example(i=0, s='zero') in examples
+
+    assert Example(i=2, s='two') not in examples
+    examples.append(Example(i=2, s='two'))
+    assert Example(i=2, s='two') in examples
+    assert len(examples) == 3
+    assert list(examples) == [
+        Example(i=0, s='zero'),
+        Example(i=1, s='one'),
+        Example(i=2, s='two')
+    ]
+    assert examples[2] == Example(i=2, s='two')

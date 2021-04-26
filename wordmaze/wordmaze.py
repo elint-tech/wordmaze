@@ -1,12 +1,13 @@
 import enum
 from functools import partial
 from numbers import Real
-from typing import Iterable, List, MutableSequence, Tuple
+from typing import Any, Callable, Iterable, List, Tuple
 
 from dataclassy import dataclass
 from dataclassy.functions import replace
 
-from wordmaze.utils.dataclasses import as_dict, as_tuple
+from wordmaze.utils.dataclasses import DataClassSequence, as_dict, as_tuple
+from wordmaze.utils.sequences import MutableSequence
 
 
 @dataclass(iter=True, kwargs=True)
@@ -33,45 +34,37 @@ class Origin(enum.Enum):
     BOTTOM_LEFT = enum.auto()
 
 
-class Page(MutableSequence[TextBox]):
+class Page(DataClassSequence[TextBox]):
     def __init__(
             self,
             shape: Shape,
             entries: Iterable[TextBox] = (),
             origin: Origin = Origin.TOP_LEFT
     ) -> None:
+        super().__init__(entries)
         self.shape: Shape = shape
-        self._entries: List[TextBox] = list(entries)
         self.origin = origin
 
-    def __str__(self) -> str:
-        return f'{self.__class__.__name__}({self._entries})'
-
-    def __getitem__(self, index: int) -> TextBox:
-        return self._entries[index]
-
-    def __setitem__(self, index: int, entry: TextBox) -> None:
-        self._entries[index] = entry
-
-    def __delitem__(self, index: int) -> None:
-        del self._entries[index]
-
-    def __len__(self) -> int:
-        return len(self._entries)
-
-    def insert(self, index: int, entry: TextBox) -> None:
-        self._entries.insert(index, entry)
-
-    def tuples(self) -> Iterable[tuple]:
-        return map(
-            partial(as_tuple, flatten=True),
-            self
+    def map(
+            self,
+            *mapper: Callable[[TextBox], TextBox],
+            **field_mappers: Callable[[Any], Any]
+    ) -> 'Page':
+        return Page(
+            shape=self.shape,
+            origin=self.origin,
+            entries=super().map(*mapper, **field_mappers)
         )
 
-    def dicts(self) -> Iterable[dict]:
-        return map(
-            partial(as_dict, flatten=True),
-            self
+    def filter(
+            self,
+            *pred: Callable[[TextBox], bool],
+            **field_preds: Callable[[Any], bool]
+    ) -> Iterable[TextBox]:
+        return Page(
+            shape=self.shape,
+            origin=self.origin,
+            entries=super().map(*pred, **field_preds)
         )
 
     def rebased(self, origin: Origin) -> 'Page':
@@ -93,34 +86,12 @@ class Page(MutableSequence[TextBox]):
                 f' from {self.origin} to {origin}.'
             )
 
-        return Page(
-            shape=self.shape,
-            origin=origin,
-            entries=map(rebaser, self)
-        )
+        return self.map(rebaser)
 
 
 class WordMaze(MutableSequence[Page]):
     def __init__(self, pages: Iterable[Page] = ()) -> None:
-        self._pages: List[Page] = list(pages)
-
-    def __str__(self) -> str:
-        return f'{self.__class__.__name__}({self._pages})'
-
-    def __getitem__(self, index: int) -> Page:
-        return self._pages[index]
-
-    def __setitem__(self, index: int, page: Page) -> None:
-        self._pages[index] = page
-
-    def __delitem__(self, index: int) -> None:
-        del self._pages[index]
-
-    def __len__(self) -> int:
-        return len(self._pages)
-
-    def insert(self, index: int, page: Page) -> None:
-        self._pages.insert(index, page)
+        super().__init__(pages)
 
     @property
     def shapes(self) -> Tuple[Shape, ...]:
@@ -139,3 +110,17 @@ class WordMaze(MutableSequence[Page]):
             for number, page in enumerate(self)
             for dct in page.dicts()
         )
+
+    def map(
+            self,
+            *mapper: Callable[[TextBox], TextBox],
+            **field_mappers: Callable[[Any], Any]
+    ) -> 'WordMaze':
+        return WordMaze(page.map(*mapper, **field_mappers) for page in self)
+
+    def filter(
+            self,
+            *pred: Callable[[TextBox], bool],
+            **field_preds: Callable[[Any], bool]
+    ) -> 'WordMaze':
+        return WordMaze(page.filter(*pred, **field_preds) for page in self)
