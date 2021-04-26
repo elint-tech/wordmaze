@@ -1,8 +1,12 @@
-from typing import Any, Dict
+import textwrap
+from functools import partial
+from typing import Any, Callable, Dict, Generic, Iterable, List, TypeVar
 
 import funcy
 from dataclassy import DataClass, asdict, astuple, values
-from dataclassy.functions import is_dataclass_instance
+from dataclassy.functions import is_dataclass_instance, replace
+
+_DataClass = TypeVar('_DataClass', bound=DataClass)
 
 
 def as_dict(
@@ -37,3 +41,88 @@ def as_tuple(
         )
     else:
         return astuple(obj)
+
+
+def field_mapper(
+        *mapper: Callable[[_DataClass], _DataClass],
+        **field_mappers: Callable[[Any], Any]
+) -> Callable[[_DataClass], _DataClass]:
+    if mapper and field_mappers:
+        raise TypeError(textwrap.dedent(
+            '''
+            *field_mapper* accepts either a mapper or keyworded mappers. For instance:
+                field_mapper(lambda textbox: process_textbox(textbox))
+                field_mapper(
+                    x1=lambda x1: x1 + 5,
+                    x2=lambda x2: x2**2,
+                    text=lambda text: text.upper()
+                )
+            '''
+        ))
+
+    if field_mappers:
+        def _mapper(obj: _DataClass) -> _DataClass:
+            obj_dict = as_dict(obj)
+
+            keys_diff = frozenset(field_mappers).difference(obj_dict)
+            if keys_diff:
+                raise ValueError(
+                    f'fields {list(keys_diff)} do not exist in object'
+                    f' {obj} from the class {type(obj)}.'
+                )
+
+            obj_dict = funcy.project(obj_dict, field_mappers)
+            changes = {
+                field_name: _field_mapper(obj_dict[field_name])
+                for field_name, _field_mapper in field_mappers.items()
+            }
+
+            return replace(
+                obj,
+                **changes
+            )
+    else:
+        _mapper = mapper[0]
+
+    return _mapper
+
+
+def field_pred(
+        *pred: Callable[[_DataClass], bool],
+        **field_preds: Callable[[Any], bool]
+) -> Callable[[_DataClass], bool]:
+    if pred and field_preds:
+        raise TypeError(textwrap.dedent(
+        '''
+        invalid call. *field_pred* accepts either a pred or keyworded preds. For instance:
+        field_pred(lambda textbox: process_textbox(textbox))
+        field_pred(
+            x1=lambda x1: x1 >= 0,
+            x2=lambda x2: (x2 % 2)==0,
+            text=lambda text: text.isdigit()
+        )
+        '''))
+
+    if field_preds:
+        def _pred(obj: _DataClass) -> bool:
+            obj_dict = as_dict(obj)
+
+            keys_diff = frozenset(field_preds).difference(obj_dict)
+            if keys_diff:
+                raise ValueError(
+                    f'fields {list(keys_diff)} do not exist in object'
+                    f' {obj} from the class {type(obj)}.'
+                )
+
+            obj_dict = funcy.project(obj_dict, field_preds)
+            preds = (
+                _field_pred(obj_dict[field_name])
+                for field_name, _field_pred in field_preds.items()
+            )
+
+            return all(preds)
+    else:
+        _pred = pred[0]
+
+    return _pred
+
