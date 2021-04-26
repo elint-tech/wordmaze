@@ -120,6 +120,19 @@ def test_field_mapper():
             x2=lambda x2: x2+10
         )
 
+    with pytest.raises(ValueError):
+        mapper = field_mapper(
+            wrong_key=lambda x: x
+        )
+        mapper(TextBox(
+            x1=0,
+            x2=1,
+            y1=0,
+            y2=1,
+            text='wololooo',
+            confidence=1
+        ))
+
 
 def test_field_pred():
     textbox1 = TextBox(
@@ -159,6 +172,19 @@ def test_field_pred():
             text=lambda txt: len(txt) > 5
         )
 
+    with pytest.raises(ValueError):
+        pred = field_pred(
+            wrong_key=lambda x: True
+        )
+        pred(TextBox(
+            x1=0,
+            x2=1,
+            y1=0,
+            y2=1,
+            text='wololooo',
+            confidence=1
+        ))
+
 
 def test_DataClassSequence():
     @dataclass
@@ -179,6 +205,7 @@ def test_DataClassSequence():
     assert Example(i=2, s='two') not in examples
     examples.append(Example(i=2, s='two'))
     assert Example(i=2, s='two') in examples
+
     assert len(examples) == 3
     assert list(examples) == [
         Example(i=0, s='zero'),
@@ -186,3 +213,15 @@ def test_DataClassSequence():
         Example(i=2, s='two')
     ]
     assert examples[2] == Example(i=2, s='two')
+
+    assert list(examples.tuples()) == [
+        (0, 'zero'),
+        (1, 'one'),
+        (2, 'two')
+    ]
+
+    assert list(examples.dicts()) == [
+        {'i': 0, 's': 'zero'},
+        {'i': 1, 's': 'one'},
+        {'i': 2, 's': 'two'}
+    ]
