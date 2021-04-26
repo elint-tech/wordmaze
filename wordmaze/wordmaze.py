@@ -43,7 +43,7 @@ class Page(DataClassSequence[TextBox]):
     ) -> None:
         super().__init__(entries)
         self.shape: Shape = shape
-        self.origin = origin
+        self.origin: Origin = origin
 
     def map(
             self,
@@ -60,14 +60,14 @@ class Page(DataClassSequence[TextBox]):
             self,
             *pred: Callable[[TextBox], bool],
             **field_preds: Callable[[Any], bool]
-    ) -> Iterable[TextBox]:
+    ) -> 'Page':
         return Page(
             shape=self.shape,
             origin=self.origin,
-            entries=super().map(*pred, **field_preds)
+            entries=super().filter(*pred, **field_preds)
         )
 
-    def rebased(self, origin: Origin) -> 'Page':
+    def rebase(self, origin: Origin) -> 'Page':
         if origin is self.origin:
             return self
         elif (
@@ -86,7 +86,9 @@ class Page(DataClassSequence[TextBox]):
                 f' from {self.origin} to {origin}.'
             )
 
-        return self.map(rebaser)
+        rebased = self.map(rebaser)
+        rebased.origin = origin
+        return rebased
 
 
 class WordMaze(MutableSequence[Page]):
