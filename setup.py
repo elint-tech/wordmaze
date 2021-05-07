@@ -6,7 +6,7 @@ from setuptools import find_packages, setup
 
 here = Path(__file__).resolve().parent
 
-VERSION = '0.3.1rc1'
+VERSION = '0.3.2'
 
 setup(
     name='wordmaze',
