@@ -1,21 +1,69 @@
 import enum
-from functools import partial
 from numbers import Real
-from typing import Any, Callable, Iterable, List, Tuple
+from typing import Any, Callable, Iterable, List, Optional, Tuple
 
 from dataclassy import dataclass
+from dataclassy.dataclass import Internal
 from dataclassy.functions import replace
 
-from wordmaze.utils.dataclasses import DataClassSequence, as_dict, as_tuple
+from wordmaze.utils.dataclasses import DataClassSequence
 from wordmaze.utils.sequences import MutableSequence
 
 
 @dataclass(iter=True, kwargs=True)
 class Box:
-    x1: Real
-    x2: Real
-    y1: Real
-    y2: Real
+    x1: Real = None
+    x2: Real = None
+    y1: Real = None
+    y2: Real = None
+
+    def __post_init__(
+            self,
+            height: Optional[Real] = None,
+            width: Optional[Real] = None
+    ) -> None:
+        if (self.x1, self.x2, width).count(None) != 1:
+            raise ValueError(
+                'exactly one of *x1*, *x2*, *width* must be *None* or omitted'
+            )
+        elif width is not None and width < 0:
+            raise ValueError('*width* must be *None* (or omitted) or >=0')
+
+        if (self.y1, self.y2, height).count(None) != 1:
+            raise ValueError(
+                'exactly one of *y1*, *y2*, *height* must be *None* (or omitted)'
+            )
+        elif height is not None and height < 0:
+            raise ValueError('*height* must be *None* (or omitted) or >=0')
+
+        if self.x1 is None:
+            self.x1 = self.x2 - width
+        elif self.x2 is None:
+            self.x2 = self.x1 + width
+        else:
+            if self.x1 > self.x2:
+                self.x2, self.x1 = self.x1, self.x2
+            width = self.x2 - self.x1
+
+        if self.y1 is None:
+            self.y1 = self.y2 - height
+        elif self.y2 is None:
+            self.y2 = self.y1 + height
+        else:
+            if self.y1 > self.y2:
+                self.y2, self.y1 = self.y1, self.y2
+            height = self.y2 - self.y1
+
+        self._height: Real = height
+        self._width: Real = width
+
+    @property
+    def height(self) -> Real:
+        return self._height
+
+    @property
+    def width(self) -> Real:
+        return self._width
 
 
 class TextBox(Box):

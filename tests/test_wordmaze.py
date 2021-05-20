@@ -1,7 +1,33 @@
 import pytest
 
-from wordmaze.wordmaze import Origin, Shape, TextBox, WordMaze
+from wordmaze.wordmaze import Box, Origin, Shape, TextBox, WordMaze
 from wordmaze import Page
+
+def test_Box():
+    with pytest.raises(ValueError):
+        Box(x1=3, y2=0, height=10)
+
+    with pytest.raises(ValueError):
+        Box(x1=3, y1=3, y2=0, width=-5)
+
+    with pytest.raises(ValueError):
+        Box(x1=3, y2=0, width=10)
+
+    with pytest.raises(ValueError):
+        Box(x1=3, y1=5, x2=12, height=-10)
+
+    box = Box(x1=1, x2=3, y1=10, y2=22)
+    assert box.width == 2
+    assert box.height == 12
+
+    box = Box(x2=10, width=7, height=14, y2=22)
+    assert box.x1 == 3
+    assert box.y1 == 8
+
+    box = Box(x1=10, width=7, height=14, y1=22)
+    assert box.x2 == 17
+    assert box.y2 == 36
+
 
 def test_Page():
     page = Page(
