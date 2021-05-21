@@ -1,6 +1,6 @@
 import pytest
 
-from wordmaze.wordmaze import Box, Origin, Shape, TextBox, WordMaze
+from wordmaze.wordmaze import Box, Origin, PageTextBox, Shape, TextBox, WordMaze
 from wordmaze import Page
 
 def test_Box():
@@ -188,10 +188,40 @@ def test_wordmaze():
         Shape(height=50, width=200)
     )
 
+    assert list(maze.textboxes()) == [
+        PageTextBox(
+            page=0,
+            x1=10,
+            x2=50,
+            y1=20,
+            y2=30,
+            text='Hello',
+            confidence=0.7
+        ),
+        PageTextBox(
+            page=0,
+            x1=60,
+            x2=75,
+            y1=80,
+            y2=85,
+            text='Bye',
+            confidence=0.6
+        ),
+        PageTextBox(
+            page=1,
+            x1=110,
+            x2=180,
+            y1=40,
+            y2=45,
+            text='Hey ho',
+            confidence=0.2
+        )
+    ]
+
     assert list(maze.tuples()) == [
-        (0, 10, 50, 20, 30, 'Hello', 0.7),
-        (0, 60, 75, 80, 85, 'Bye', 0.6),
-        (1, 110, 180, 40, 45, 'Hey ho', 0.2)
+        (10, 50, 20, 30, 'Hello', 0.7, 0),
+        (60, 75, 80, 85, 'Bye', 0.6, 0),
+        (110, 180, 40, 45, 'Hey ho', 0.2, 1)
     ]
 
     assert list(maze.dicts()) == [

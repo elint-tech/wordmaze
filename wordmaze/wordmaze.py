@@ -1,4 +1,5 @@
 import enum
+from functools import partial
 from numbers import Real
 from typing import Any, Callable, Iterable, List, Optional, Tuple
 
@@ -6,7 +7,7 @@ from dataclassy import dataclass
 from dataclassy.dataclass import Internal
 from dataclassy.functions import replace
 
-from wordmaze.utils.dataclasses import DataClassSequence
+from wordmaze.utils.dataclasses import DataClassSequence, as_dict, as_tuple
 from wordmaze.utils.sequences import MutableSequence
 
 
@@ -64,6 +65,10 @@ class Box:
 class TextBox(Box):
     text: str
     confidence: Real
+
+
+class PageTextBox(TextBox):
+    page: int
 
 
 @dataclass(iter=True)
@@ -142,18 +147,26 @@ class WordMaze(MutableSequence[Page]):
     def shapes(self) -> Tuple[Shape, ...]:
         return tuple(page.shape for page in self)
 
-    def tuples(self) -> Iterable[tuple]:
+    def textboxes(self) -> Iterable[PageTextBox]:
         return (
-            (number,) + tpl
+            PageTextBox(
+                page=number,
+                **as_dict(textbox)
+            )
             for number, page in enumerate(self)
-            for tpl in page.tuples()
+            for textbox in page
+        )
+
+    def tuples(self) -> Iterable[tuple]:
+        return map(
+            partial(as_tuple, flatten=True),
+            self.textboxes()
         )
 
     def dicts(self) -> Iterable[dict]:
-        return (
-            dict(dct, page=number)
-            for number, page in enumerate(self)
-            for dct in page.dicts()
+        return map(
+            partial(as_dict, flatten=True),
+            self.textboxes()
         )
 
     def map(
