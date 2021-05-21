@@ -43,7 +43,6 @@ class Box:
         else:
             if self.x1 > self.x2:
                 self.x2, self.x1 = self.x1, self.x2
-            width = self.x2 - self.x1
 
         if self.y1 is None:
             self.y1 = self.y2 - height
@@ -52,18 +51,14 @@ class Box:
         else:
             if self.y1 > self.y2:
                 self.y2, self.y1 = self.y1, self.y2
-            height = self.y2 - self.y1
-
-        self._height: Real = height
-        self._width: Real = width
 
     @property
     def height(self) -> Real:
-        return self._height
+        return abs(self.y1 - self.y2)
 
     @property
     def width(self) -> Real:
-        return self._width
+        return abs(self.x1 - self.x2)
 
 
 class TextBox(Box):
