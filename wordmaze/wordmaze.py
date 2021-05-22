@@ -61,6 +61,14 @@ class Box:
     def width(self) -> Real:
         return abs(self.x1 - self.x2)
 
+    @property
+    def xmid(self) -> Real:
+        return 0.5*(self.x1 + self.x2)
+
+    @property
+    def ymid(self) -> Real:
+        return 0.5*(self.y1 + self.y2)
+
 
 class TextBox(Box):
     text: str

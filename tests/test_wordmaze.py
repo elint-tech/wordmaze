@@ -16,9 +16,11 @@ def test_Box():
     with pytest.raises(ValueError):
         Box(x1=3, y1=5, x2=12, height=-10)
 
-    box = Box(x1=1, x2=3, y1=10, y2=22)
+    box = Box(x1=3, x2=5, y1=10, y2=22)
     assert box.width == 2
     assert box.height == 12
+    assert box.xmid == 4
+    assert box.ymid == 16
 
     box = Box(x2=10, width=7, height=14, y2=22)
     assert box.x1 == 3
