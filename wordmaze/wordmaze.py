@@ -63,11 +63,11 @@ class Box:
 
     @property
     def xmid(self) -> Real:
-        return 0.5*(self.x1 + self.x2)
+        return (self.x1 + self.x2)/2
 
     @property
     def ymid(self) -> Real:
-        return 0.5*(self.y1 + self.y2)
+        return (self.y1 + self.y2)/2
 
 
 class TextBox(Box):
