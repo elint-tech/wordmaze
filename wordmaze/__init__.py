@@ -1,7 +1,10 @@
 import wordmaze.utils
 import wordmaze.wordmaze
-from wordmaze.wordmaze import Box, Page, TextBox, WordMaze
+from wordmaze.wordmaze import (Box, Origin, Page, PageTextBox, Shape, TextBox,
+                               WordMaze)
 
 __all__ = [
-    'Box', 'Page', 'TextBox', 'WordMaze'
+    'Box', 'PageTextBox', 'TextBox',
+    'Origin', 'Shape', 'Page',
+    'WordMaze'
 ]
