@@ -5,7 +5,7 @@ WordMaze
 
 *Words and textboxes made amazing.*
 
-# About
+## About
 
 WordMaze is a standardized format for text extracted from documents.
 
@@ -43,7 +43,7 @@ textbox = TextBox(
 )
 ```
 
-# Usage
+## Usage
 
 Perhaps the best example of usage is [`pdfmap.PDFMaze`](https://github.com/elint-tech/pdfmap/blob/e5b3434a63729ba5a737201d93a146f2e0e5ad7a/pdfmap/pdfmaze.py), the first application of WordMaze in a public repository.
 
@@ -51,9 +51,9 @@ The exact expected behaviour of every piece of code in WordMaze can be checked o
 
 There are three main groups of objects defined in WordMaze:
 
-## Textboxes
+### Textboxes
 
-### `Box`es
+#### `Box`es
 
 The first and most fundamental [(data)class](https://pypi.org/project/dataclassy/) is the `Box`, which contains only positional information of a textbox inside a document's page:
 ```py
@@ -84,7 +84,7 @@ print(box.xmid) # 2
 print(box.ymid) # 16
 ```
 
-### `Textbox`es
+#### `Textbox`es
 
 To include textual information in a textbox, use a `TextBox`:
 ```py
@@ -110,7 +110,7 @@ print(textbox.text) # Dr. White.
 print(textbox.confidence) # 0.85
 ```
 
-### `PageTextBox`es
+#### `PageTextBox`es
 
 If you also wish to include the page number from which your textbox was extracted, you can use a `PageTextBox`:
 ```py
@@ -132,9 +132,9 @@ print(textbox.page) # 3
 
 Note that page counting starts from `0` as is common in Python, so that page #3 is the 4th page of the document.
 
-## Pages
+### Pages
 
-### The basics
+#### The basics
 
 `Page`s are a representation of a document's page. They contain information regarding their size, their coordinate system's origin and their textboxes. For instance:
 ```py
@@ -169,7 +169,7 @@ for textbox in page: # iteration
 print(page[3]) # 4th textbox
 ```
 
-### Different origins
+#### Different origins
 
 There are two `Origin`s your page may have:
 - `Origin.TOP_LEFT`: `y==0` means top, `y==page.shape.height` means bottom;
@@ -197,7 +197,7 @@ assert nice_page.shape == bad_page.shape # rebasing preserves page shape
 print(nice_page[0].y1, nice_page[0].y2) # 2 3
 ```
 
-### Transforming and filtering `TextBox`es
+#### Transforming and filtering `TextBox`es
 
 You can easily modify and filter out `TextBox`es contained in a `Page` using `Page.map` and `Page.filter`, which behave like [`map`](https://docs.python.org/3/library/functions.html#map) and [`filter`](https://docs.python.org/3/library/functions.html#filter) where the iterable is fixed and equal to the page's textboxes:
 ```py
@@ -236,7 +236,7 @@ padded_page = page.map(
 good_page = padded_page.filter(confidence=lambda conf: conf >= 0.25)
 ```
 
-### `tuple`s and `dict`s
+#### `tuple`s and `dict`s
 
 You can also convert page's textboxes to `tuple`s or `dict`s with `Page.tuples` and `Page.dicts`:
 ```py
@@ -252,7 +252,7 @@ for dct in page.dicts():
 	print(dct)
 ```
 
-## `WordMaze`s
+### `WordMaze`s
 
 The top-level class from WordMaze is, of course, a `WordMaze`. `WordMaze`s are simply sequences of `Page`s:
 ```py
@@ -303,13 +303,13 @@ for dct in wm.dicts():
 	print(dct)
 ```
 
-# Installing
+## Installing
 
 Install WordMaze from [PyPI](https://pypi.org/project/wordmaze/):
 ```
 pip install wordmaze
 ```
 
-# Projects using WordMaze
+## Projects using WordMaze
 
 * [elint-tech/pdfmap](https://github.com/elint-tech/pdfmap): easily extract textboxes from PDF files.
