@@ -2,8 +2,13 @@ import pytest
 from dataclassy import dataclass
 
 from wordmaze import TextBox
-from wordmaze.utils.dataclasses import (DataClassSequence, as_dict, as_tuple,
-                                        field_mapper, field_pred)
+from wordmaze.utils.dataclasses import (
+    DataClassSequence,
+    as_dict,
+    as_tuple,
+    field_mapper,
+    field_pred,
+)
 
 
 def test_as_dict():
@@ -22,16 +27,14 @@ def test_as_dict():
     text_page_dict = as_dict(text_page, flatten=False)
     text_page_dict_ans = {
         'index': 0,
-        'contents': {
-            'text': 'In a hole in the ground there lived a hobbit'
-        }
+        'contents': {'text': 'In a hole in the ground there lived a hobbit'},
     }
     assert text_page_dict == text_page_dict_ans
 
     flat_text_page_dict = as_dict(text_page, flatten=True)
     flat_text_page_dict_ans = {
         'index': 0,
-        'text': 'In a hole in the ground there lived a hobbit'
+        'text': 'In a hole in the ground there lived a hobbit',
     }
     assert flat_text_page_dict == flat_text_page_dict_ans
 
@@ -52,14 +55,14 @@ def test_as_tuple():
     text_page_tuple = as_tuple(text_page, flatten=False)
     text_page_tuple_ans = (
         0,
-        ('In a hole in the ground there lived a hobbit',)
+        ('In a hole in the ground there lived a hobbit',),
     )
     assert text_page_tuple == text_page_tuple_ans
 
     flat_text_page_tuple = as_tuple(text_page, flatten=True)
     flat_text_page_tuple_ans = (
         0,
-        'In a hole in the ground there lived a hobbit'
+        'In a hole in the ground there lived a hobbit',
     )
     assert flat_text_page_tuple == flat_text_page_tuple_ans
 
@@ -71,7 +74,7 @@ def test_field_mapper():
         y1=10,
         y2=11,
         text='One ring to rule them all',
-        confidence=10
+        confidence=10,
     )
 
     flipper = field_mapper(
@@ -81,7 +84,7 @@ def test_field_mapper():
             y1=tbox.y2,
             y2=tbox.y1,
             text=tbox.text[::-1],
-            confidence=1/tbox.confidence
+            confidence=1 / tbox.confidence,
         )
     )
     assert flipper(textbox) == TextBox(
@@ -90,20 +93,17 @@ def test_field_mapper():
         y1=11,
         y2=10,
         text='lla meht elur ot gnir enO',
-        confidence=0.1
+        confidence=0.1,
     )
 
-    padder = field_mapper(
-        x1=lambda x1: x1-10,
-        x2=lambda x2: x2+10
-    )
+    padder = field_mapper(x1=lambda x1: x1 - 10, x2=lambda x2: x2 + 10)
     assert padder(textbox) == TextBox(
         x1=-10,
         x2=11,
         y1=10,
         y2=11,
         text='One ring to rule them all',
-        confidence=10
+        confidence=10,
     )
 
     with pytest.raises(TypeError):
@@ -114,24 +114,15 @@ def test_field_mapper():
                 y1=tbox.y2,
                 y2=tbox.y1,
                 text=tbox.text[::-1],
-                confidence=1/tbox.confidence
+                confidence=1 / tbox.confidence,
             ),
-            x1=lambda x1: x1-10,
-            x2=lambda x2: x2+10
+            x1=lambda x1: x1 - 10,
+            x2=lambda x2: x2 + 10,
         )
 
     with pytest.raises(ValueError):
-        mapper = field_mapper(
-            wrong_key=lambda x: x
-        )
-        mapper(TextBox(
-            x1=0,
-            x2=1,
-            y1=0,
-            y2=1,
-            text='wololooo',
-            confidence=1
-        ))
+        mapper = field_mapper(wrong_key=lambda x: x)
+        mapper(TextBox(x1=0, x2=1, y1=0, y2=1, text='wololooo', confidence=1))
 
 
 def test_field_pred():
@@ -141,15 +132,10 @@ def test_field_pred():
         y1=10,
         y2=11,
         text='One ring to rule them all',
-        confidence=10
+        confidence=10,
     )
     textbox2 = TextBox(
-        x1=0,
-        x2=1,
-        y1=10,
-        y2=11,
-        text='One ring to rule no one',
-        confidence=1
+        x1=0, x2=1, y1=10, y2=11, text='One ring to rule no one', confidence=1
     )
 
     is_long_confident = field_pred(
@@ -159,8 +145,7 @@ def test_field_pred():
     assert not is_long_confident(textbox2)
 
     is_long_confident = field_pred(
-        confidence=lambda conf: conf > 5,
-        text=lambda txt: len(txt) > 5
+        confidence=lambda conf: conf > 5, text=lambda txt: len(txt) > 5
     )
     assert is_long_confident(textbox1)
     assert not is_long_confident(textbox2)
@@ -169,21 +154,12 @@ def test_field_pred():
         field_pred(
             lambda tbox: tbox.confidence > 5 and len(tbox.text) > 5,
             confidence=lambda conf: conf > 5,
-            text=lambda txt: len(txt) > 5
+            text=lambda txt: len(txt) > 5,
         )
 
     with pytest.raises(ValueError):
-        pred = field_pred(
-            wrong_key=lambda x: True
-        )
-        pred(TextBox(
-            x1=0,
-            x2=1,
-            y1=0,
-            y2=1,
-            text='wololooo',
-            confidence=1
-        ))
+        pred = field_pred(wrong_key=lambda x: True)
+        pred(TextBox(x1=0, x2=1, y1=0, y2=1, text='wololooo', confidence=1))
 
 
 def test_DataClassSequence():
@@ -195,10 +171,7 @@ def test_DataClassSequence():
     class Examples(DataClassSequence[Example]):
         pass
 
-    examples = Examples([
-        Example(i=0, s='zero'),
-        Example(i=1, s='one')
-    ])
+    examples = Examples([Example(i=0, s='zero'), Example(i=1, s='one')])
 
     assert Example(i=0, s='zero') in examples
 
@@ -210,18 +183,14 @@ def test_DataClassSequence():
     assert list(examples) == [
         Example(i=0, s='zero'),
         Example(i=1, s='one'),
-        Example(i=2, s='two')
+        Example(i=2, s='two'),
     ]
     assert examples[2] == Example(i=2, s='two')
 
-    assert list(examples.tuples()) == [
-        (0, 'zero'),
-        (1, 'one'),
-        (2, 'two')
-    ]
+    assert list(examples.tuples()) == [(0, 'zero'), (1, 'one'), (2, 'two')]
 
     assert list(examples.dicts()) == [
         {'i': 0, 's': 'zero'},
         {'i': 1, 's': 'one'},
-        {'i': 2, 's': 'two'}
+        {'i': 2, 's': 'two'},
     ]
