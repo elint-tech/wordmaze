@@ -1,0 +1,17 @@
+[tool.isort]
+profile = "black"
+known_first_party = ["wordmaze"]
+multi_line_output = 3
+line_length = 79
+
+[tool.black]
+include = '\.pyi?$'
+line-length = 79
+skip-string-normalization = true
+
+[tool.unimport]
+gitignore = true
+ignore_init = true
+include_star_import = true
+remove = true
+requirements = true

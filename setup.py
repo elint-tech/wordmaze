@@ -11,21 +11,16 @@ VERSION = (here / 'VERSION').read_text().strip()
 setup(
     name='wordmaze',
     version=VERSION,
-
     description="Words and textboxes made amazing",
     long_description=Path(here, 'README.md').read_text(),
     long_description_content_type="text/markdown",
-
     license='MIT',
     author='elint-tech',
     author_email='contato@elint.com.br',
-
     url='https://github.com/elint-tech/wordmaze/',
     download_url=f'https://github.com/elint-tech/wordmaze/dist/wordmaze-{VERSION}.tar.gz',
-
     install_requires=Path(here, 'requirements.txt').read_text().splitlines(),
     packages=find_packages(),
-
     keywords=[
         'wordmaze',
         'ocr',
@@ -36,7 +31,7 @@ setup(
         'textbox',
         'textboxes',
         'text-mining',
-        'text-mining-analysis'
+        'text-mining-analysis',
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
@@ -48,5 +43,5 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Operating System :: OS Independent',
-    ]
+    ],
 )
