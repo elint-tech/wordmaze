@@ -70,9 +70,26 @@ class Box:
         return (self.y1 + self.y2)/2
 
 
-class TextBox(Box):
+class Element(Box):
+    pass
+
+
+class TextBox(Element):
     text: str
     confidence: Real
+
+
+class FloatingElement(Element):
+    caption: Optional[TextBox] = None
+
+
+class Table(FloatingElement):
+    pass
+
+
+class Figure(FloatingElement):
+    content: bytes
+    image_type: str
 
 
 class PageTextBox(TextBox):
@@ -90,20 +107,34 @@ class Origin(enum.Enum):
     BOTTOM_LEFT = enum.auto()
 
 
-class Page(DataClassSequence[TextBox]):
+class Page(DataClassSequence[Element]):
     def __init__(
             self,
             shape: Shape,
-            entries: Iterable[TextBox] = (),
+            entries: Iterable[Element] = (),
             origin: Origin = Origin.TOP_LEFT
     ) -> None:
         super().__init__(entries)
         self.shape: Shape = shape
         self.origin: Origin = origin
 
+    def textboxes(self) -> Iterable[TextBox]:
+        return (
+            element
+            for element in self
+            if isinstance(element, TextBox)
+        )
+    
+    def figures(self) -> Iterable[Figure]:
+        return (
+            element
+            for element in self
+            if isinstance(element, Figure)
+        )
+
     def map(
             self,
-            *mapper: Callable[[TextBox], TextBox],
+            *mapper: Callable[[Element], Element],
             **field_mappers: Callable[[Any], Any]
     ) -> 'Page':
         return Page(
@@ -114,7 +145,7 @@ class Page(DataClassSequence[TextBox]):
 
     def filter(
             self,
-            *pred: Callable[[TextBox], bool],
+            *pred: Callable[[Element], bool],
             **field_preds: Callable[[Any], bool]
     ) -> 'Page':
         return Page(
@@ -130,11 +161,11 @@ class Page(DataClassSequence[TextBox]):
             (origin is Origin.BOTTOM_LEFT and self.origin is Origin.TOP_LEFT)
             or (origin is Origin.TOP_LEFT and self.origin is Origin.BOTTOM_LEFT)
         ):
-            def rebaser(textbox: TextBox) -> TextBox:
+            def rebaser(element: Element) -> Element:
                 return replace(
-                    textbox,
-                    y1=self.shape.height - textbox.y2,
-                    y2=self.shape.height - textbox.y1
+                    element,
+                    y1=self.shape.height - element.y2,
+                    y2=self.shape.height - element.y1
                 )
         else:
             raise NotImplementedError(

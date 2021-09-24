@@ -1,6 +1,6 @@
 import pytest
 
-from wordmaze.wordmaze import Box, Origin, PageTextBox, Shape, TextBox, WordMaze
+from wordmaze.wordmaze import Box, Origin, PageTextBox, Shape, TextBox, WordMaze, Figure
 from wordmaze import Page
 
 def test_Box():
@@ -299,3 +299,25 @@ def test_wordmaze():
             entries=[]
         )
     ]).tuples())
+
+def test_Figures_and_Textboxes_in_Page() -> None:
+    textbox1 = TextBox(
+        x1=1, x2=2, y1=3, y2=4, text="Sicher the wizard", confidence=0.8
+    )
+
+    figure1 = Figure(
+        x1=1, x2=2, y1=3, y2=4, content=b'\x00\x00\x00\x00', image_type='png'
+    )
+    textbox2 = TextBox(
+        x1=1, x2=2, y1=3, y2=4, text="Sicher the wizard", confidence=0.8
+    )
+
+    page = Page(
+        shape=Shape(height=100, width=80),
+        origin=Origin.TOP_LEFT,
+        entries=[textbox1, figure1, textbox2]
+    )
+
+    assert list(page) == [textbox1, figure1, textbox2]
+    assert list(page.textboxes()) == [textbox1, textbox2]
+    assert list(page.figures()) == [figure1]
