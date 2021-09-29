@@ -3,7 +3,7 @@ from __future__ import annotations
 import enum
 from functools import partial
 from numbers import Real
-from typing import Any, Callable, Iterable, Optional, Tuple
+from typing import Any, Callable, Iterable, Optional, Tuple, TypeVar
 
 from dataclassy import dataclass
 from dataclassy.functions import replace
@@ -72,6 +72,9 @@ class Element(Box):
     pass
 
 
+_Element = TypeVar('_Element', bound=Element)
+
+
 class TextBox(Element):
     text: str
     confidence: Real
@@ -116,11 +119,11 @@ class Page(DataClassSequence[Element]):
         self.shape: Shape = shape
         self.origin: Origin = origin
 
-    def textboxes(self) -> Iterable[TextBox]:
-        return filter(isa(TextBox), self)
+    def textboxes(self) -> DataClassSequence[TextBox]:
+        return self.iter(TextBox)
 
-    def figures(self) -> Iterable[Figure]:
-        return filter(isa(Figure), self)
+    def figures(self) -> DataClassSequence[Figure]:
+        return self.iter(Figure)
 
     def map(
         self,
@@ -153,7 +156,7 @@ class Page(DataClassSequence[Element]):
             origin is Origin.BOTTOM_LEFT and self.origin is Origin.TOP_LEFT
         ) or (origin is Origin.TOP_LEFT and self.origin is Origin.BOTTOM_LEFT):
 
-            def rebaser(element: Element) -> Element:
+            def rebaser(element: _Element) -> _Element:
                 return replace(
                     element,
                     y1=self.shape.height - element.y2,

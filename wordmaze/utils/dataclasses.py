@@ -1,14 +1,26 @@
+from __future__ import annotations
+
 import textwrap
 from functools import partial
-from typing import Any, Callable, Dict, Iterable, Optional, TypeVar
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    Optional,
+    Type,
+    TypeVar,
+)
 
 import funcy
 from dataclassy import DataClass, asdict, astuple, values
 from dataclassy.functions import is_dataclass_instance, replace
 
 from wordmaze.utils.sequences import MutableSequence
+from wordmaze.utils.typing import isa
 
 _DataClass = TypeVar('_DataClass', bound=DataClass)
+_DataClass2 = TypeVar('_DataClass2', bound=DataClass)
 _T = TypeVar('_T')
 
 
@@ -132,6 +144,11 @@ class DataClassSequence(MutableSequence[_DataClass]):
     def __init__(self, entries: Iterable[_DataClass] = ()) -> None:
         super().__init__(entries)
 
+    def iter(
+        self, type_: Type[_DataClass2], /
+    ) -> DataClassSequence[_DataClass2]:
+        return DataClassSequence(filter(isa(type_), self))
+
     def tuples(self) -> Iterable[tuple]:
         return map(partial(as_tuple, flatten=True), self)
 
@@ -143,15 +160,15 @@ class DataClassSequence(MutableSequence[_DataClass]):
         mapper: Optional[Callable[[_DataClass], _DataClass]] = None,
         /,
         **field_mappers: Callable[[Any], Any],
-    ) -> Iterable[_DataClass]:
+    ) -> DataClassSequence[_DataClass]:
         _mapper = field_mapper(mapper, **field_mappers)
-        return map(_mapper, self)
+        return DataClassSequence(map(_mapper, self))
 
     def filter(
         self,
         pred: Optional[Callable[[_DataClass], bool]] = None,
         /,
         **field_preds: Callable[[Any], bool],
-    ) -> Iterable[_DataClass]:
+    ) -> DataClassSequence[_DataClass]:
         _pred = field_pred(pred, **field_preds)
-        return filter(_pred, self)
+        return DataClassSequence(filter(_pred, self))
