@@ -1,15 +1,16 @@
+from __future__ import annotations
+
 import enum
 from functools import partial
 from numbers import Real
-from typing import Any, Callable, Iterable, List, Optional, Tuple
-from wordmaze.utils.typing import isa
+from typing import Any, Callable, Iterable, Optional, Tuple
 
 from dataclassy import dataclass
-from dataclassy.dataclass import Internal
 from dataclassy.functions import replace
 
 from wordmaze.utils.dataclasses import DataClassSequence, as_dict, as_tuple
 from wordmaze.utils.sequences import MutableSequence
+from wordmaze.utils.typing import isa
 
 
 @dataclass(iter=True, kwargs=True)
@@ -40,17 +41,15 @@ class Box:
             self.x1 = self.x2 - width
         elif self.x2 is None:
             self.x2 = self.x1 + width
-        else:
-            if self.x1 > self.x2:
-                self.x2, self.x1 = self.x1, self.x2
+        elif self.x1 > self.x2:
+            self.x2, self.x1 = self.x1, self.x2
 
         if self.y1 is None:
             self.y1 = self.y2 - height
         elif self.y2 is None:
             self.y2 = self.y1 + height
-        else:
-            if self.y1 > self.y2:
-                self.y2, self.y1 = self.y1, self.y2
+        elif self.y1 > self.y2:
+            self.y2, self.y1 = self.y1, self.y2
 
     @property
     def height(self) -> Real:
@@ -125,27 +124,29 @@ class Page(DataClassSequence[Element]):
 
     def map(
         self,
-        *mapper: Callable[[Element], Element],
+        mapper: Optional[Callable[[Element], Element]] = None,
+        /,
         **field_mappers: Callable[[Any], Any],
-    ) -> 'Page':
+    ) -> Page:
         return Page(
             shape=self.shape,
             origin=self.origin,
-            entries=super().map(*mapper, **field_mappers),
+            entries=super().map(mapper, **field_mappers),
         )
 
     def filter(
         self,
-        *pred: Callable[[Element], bool],
+        pred: Optional[Callable[[Element], bool]] = None,
+        /,
         **field_preds: Callable[[Any], bool],
-    ) -> 'Page':
+    ) -> Page:
         return Page(
             shape=self.shape,
             origin=self.origin,
-            entries=super().filter(*pred, **field_preds),
+            entries=super().filter(pred, **field_preds),
         )
 
-    def rebase(self, origin: Origin) -> 'Page':
+    def rebase(self, origin: Origin) -> Page:
         if origin is self.origin:
             return self
         elif (
@@ -193,14 +194,16 @@ class WordMaze(MutableSequence[Page]):
 
     def map(
         self,
-        *mapper: Callable[[TextBox], TextBox],
+        mapper: Optional[Callable[[Element], Element]] = None,
+        /,
         **field_mappers: Callable[[Any], Any],
-    ) -> 'WordMaze':
-        return WordMaze(page.map(*mapper, **field_mappers) for page in self)
+    ) -> WordMaze:
+        return WordMaze(page.map(mapper, **field_mappers) for page in self)
 
     def filter(
         self,
-        *pred: Callable[[TextBox], bool],
+        pred: Optional[Callable[[Element], bool]] = None,
+        /,
         **field_preds: Callable[[Any], bool],
-    ) -> 'WordMaze':
-        return WordMaze(page.filter(*pred, **field_preds) for page in self)
+    ) -> WordMaze:
+        return WordMaze(page.filter(pred, **field_preds) for page in self)

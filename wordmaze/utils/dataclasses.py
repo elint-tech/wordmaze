@@ -1,6 +1,6 @@
 import textwrap
 from functools import partial
-from typing import Any, Callable, Dict, Generic, Iterable, List, TypeVar
+from typing import Any, Callable, Dict, Iterable, Optional, TypeVar
 
 import funcy
 from dataclassy import DataClass, asdict, astuple, values
@@ -9,9 +9,10 @@ from dataclassy.functions import is_dataclass_instance, replace
 from wordmaze.utils.sequences import MutableSequence
 
 _DataClass = TypeVar('_DataClass', bound=DataClass)
+_T = TypeVar('_T')
 
 
-def as_dict(obj: DataClass, flatten: bool = False) -> Dict[str, Any]:
+def as_dict(obj: DataClass, *, flatten: bool = False) -> Dict[str, Any]:
     if flatten:
         return funcy.join(
             (
@@ -25,7 +26,7 @@ def as_dict(obj: DataClass, flatten: bool = False) -> Dict[str, Any]:
         return asdict(obj)
 
 
-def as_tuple(obj: DataClass, flatten: bool = False) -> tuple:
+def as_tuple(obj: DataClass, *, flatten: bool = False) -> tuple:
     if flatten:
         return funcy.join(
             (
@@ -40,32 +41,17 @@ def as_tuple(obj: DataClass, flatten: bool = False) -> tuple:
 
 
 def field_mapper(
-    *mapper: Callable[[_DataClass], _DataClass],
-    **field_mappers: Callable[[Any], Any],
+    mapper: Optional[Callable[[_DataClass], _DataClass]] = None,
+    /,
+    **field_mappers: Callable[[_T], _T],
 ) -> Callable[[_DataClass], _DataClass]:
-    if mapper and field_mappers:
-        raise TypeError(
-            textwrap.dedent(
-                '''
-            *field_mapper* accepts either a mapper or keyworded mappers. For instance:
-                field_mapper(lambda textbox: process_textbox(textbox))
-                field_mapper(
-                    x1=lambda x1: x1 + 5,
-                    x2=lambda x2: x2**2,
-                    text=lambda text: text.upper()
-                )
-            '''
-            )
-        )
+    if mapper is None and field_mappers:
 
-    if field_mappers:
-
-        def _mapper(obj: _DataClass) -> _DataClass:
+        def _mapper(obj: _DataClass, /) -> _DataClass:
             obj_dict = as_dict(obj)
 
-            keys_diff = frozenset(field_mappers).difference(obj_dict)
-            if keys_diff:
-                raise ValueError(
+            if keys_diff := frozenset(field_mappers).difference(obj_dict):
+                raise TypeError(
                     f'fields {list(keys_diff)} do not exist in object'
                     f' {obj} from the class {type(obj)}.'
                 )
@@ -78,16 +64,53 @@ def field_mapper(
 
             return replace(obj, **changes)
 
+    elif mapper is not None and not field_mappers:
+        _mapper = mapper
     else:
-        _mapper = mapper[0]
+        raise TypeError(
+            textwrap.dedent(
+                '''
+                *field_mapper* accepts either a mapper or keyworded mappers. For instance:
+                    field_mapper(lambda textbox: process_textbox(textbox))
+                    field_mapper(
+                        x1=lambda x1: x1 + 5,
+                        x2=lambda x2: x2**2,
+                        text=lambda text: text.upper()
+                    )
+                '''
+            )
+        )
 
     return _mapper
 
 
 def field_pred(
-    *pred: Callable[[_DataClass], bool], **field_preds: Callable[[Any], bool]
+    pred: Optional[Callable[[_DataClass], bool]] = None,
+    /,
+    **field_preds: Callable[[Any], bool],
 ) -> Callable[[_DataClass], bool]:
-    if pred and field_preds:
+    if pred is None and field_preds:
+
+        def _pred(obj: _DataClass, /) -> bool:
+            obj_dict = as_dict(obj)
+
+            if keys_diff := frozenset(field_preds).difference(obj_dict):
+                raise TypeError(
+                    f'fields {list(keys_diff)} do not exist in object'
+                    f' {obj} from the class {type(obj)}.'
+                )
+
+            obj_dict = funcy.project(obj_dict, field_preds)
+            preds = (
+                _field_pred(obj_dict[field_name])
+                for field_name, _field_pred in field_preds.items()
+            )
+
+            return all(preds)
+
+    elif pred is not None and not field_preds:
+        _pred = pred
+    else:
         raise TypeError(
             textwrap.dedent(
                 '''
@@ -101,29 +124,6 @@ def field_pred(
                 '''
             )
         )
-
-    if field_preds:
-
-        def _pred(obj: _DataClass) -> bool:
-            obj_dict = as_dict(obj)
-
-            keys_diff = frozenset(field_preds).difference(obj_dict)
-            if keys_diff:
-                raise ValueError(
-                    f'fields {list(keys_diff)} do not exist in object'
-                    f' {obj} from the class {type(obj)}.'
-                )
-
-            obj_dict = funcy.project(obj_dict, field_preds)
-            preds = (
-                _field_pred(obj_dict[field_name])
-                for field_name, _field_pred in field_preds.items()
-            )
-
-            return all(preds)
-
-    else:
-        _pred = pred[0]
 
     return _pred
 
@@ -140,16 +140,18 @@ class DataClassSequence(MutableSequence[_DataClass]):
 
     def map(
         self,
-        *mapper: Callable[[_DataClass], _DataClass],
+        mapper: Optional[Callable[[_DataClass], _DataClass]] = None,
+        /,
         **field_mappers: Callable[[Any], Any],
     ) -> Iterable[_DataClass]:
-        _mapper = field_mapper(*mapper, **field_mappers)
+        _mapper = field_mapper(mapper, **field_mappers)
         return map(_mapper, self)
 
     def filter(
         self,
-        *pred: Callable[[_DataClass], bool],
+        pred: Optional[Callable[[_DataClass], bool]] = None,
+        /,
         **field_preds: Callable[[Any], bool],
     ) -> Iterable[_DataClass]:
-        _pred = field_pred(*pred, **field_preds)
+        _pred = field_pred(pred, **field_preds)
         return filter(_pred, self)

@@ -11,16 +11,18 @@ from wordmaze.utils.dataclasses import (
 )
 
 
-def test_as_dict():
-    @dataclass
-    class Text:
-        text: str
+@dataclass
+class Text:
+    text: str
 
-    @dataclass
-    class TextPage:
-        index: int
-        contents: Text
 
+@dataclass
+class TextPage:
+    index: int
+    contents: Text
+
+
+def test_as_dict() -> None:
     text = Text('In a hole in the ground there lived a hobbit')
     text_page = TextPage(index=0, contents=text)
 
@@ -39,16 +41,7 @@ def test_as_dict():
     assert flat_text_page_dict == flat_text_page_dict_ans
 
 
-def test_as_tuple():
-    @dataclass
-    class Text:
-        text: str
-
-    @dataclass
-    class TextPage:
-        index: int
-        contents: Text
-
+def test_as_tuple() -> None:
     text = Text('In a hole in the ground there lived a hobbit')
     text_page = TextPage(index=0, contents=text)
 
@@ -67,7 +60,7 @@ def test_as_tuple():
     assert flat_text_page_tuple == flat_text_page_tuple_ans
 
 
-def test_field_mapper():
+def test_field_mapper() -> None:
     textbox = TextBox(
         x1=0,
         x2=1,
@@ -120,12 +113,12 @@ def test_field_mapper():
             x2=lambda x2: x2 + 10,
         )
 
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         mapper = field_mapper(wrong_key=lambda x: x)
         mapper(TextBox(x1=0, x2=1, y1=0, y2=1, text='wololooo', confidence=1))
 
 
-def test_field_pred():
+def test_field_pred() -> None:
     textbox1 = TextBox(
         x1=0,
         x2=1,
@@ -157,12 +150,12 @@ def test_field_pred():
             text=lambda txt: len(txt) > 5,
         )
 
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         pred = field_pred(wrong_key=lambda x: True)
         pred(TextBox(x1=0, x2=1, y1=0, y2=1, text='wololooo', confidence=1))
 
 
-def test_DataClassSequence():
+def test_DataClassSequence() -> None:
     @dataclass
     class Example:
         i: int
