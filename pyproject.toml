@@ -15,3 +15,11 @@ ignore_init = true
 include_star_import = true
 remove = true
 requirements = true
+
+[tool.mypy]
+plugins = ["dataclassy.mypy"]
+
+[tool.coverage.report]
+exclude_lines = [
+	"@overload"
+]
