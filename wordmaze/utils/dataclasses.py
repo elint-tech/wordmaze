@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import textwrap
 from functools import partial
 from typing import (
@@ -309,25 +310,25 @@ class DataClassSequence(MutableSequence[_DataClass]):
     @overload
     def map(
         self, mapper: Callable[[_DataClass], _DataClass], /
-    ) -> Callable[[_DataClass], _DataClass]:
+    ) -> DataClassSequence[_DataClass]:
         ...
 
     @overload
     def map(
         self, type_: Type[_T], mapper: Callable[[_T], _DataClass], /
-    ) -> Callable[[_DataClass], _DataClass]:
+    ) -> DataClassSequence[_DataClass]:
         ...
 
     @overload
     def map(
         self, **field_mappers: Callable[[_T], _T]
-    ) -> Callable[[_DataClass], _DataClass]:
+    ) -> DataClassSequence[_DataClass]:
         ...
 
     @overload
     def map(
         self, type_: Type[_U], /, **field_mappers: Callable[[_T], _T]
-    ) -> Callable[[_DataClass], _DataClass]:
+    ) -> DataClassSequence[_DataClass]:
         ...
 
     def map(
@@ -340,30 +341,32 @@ class DataClassSequence(MutableSequence[_DataClass]):
         **field_mappers: Callable[[_T], _T],
     ) -> DataClassSequence[_DataClass]:
         _mapper = field_mapper(type_or_mapper, mapper, **field_mappers)
-        return DataClassSequence(map(_mapper, self))
+        obj = copy.copy(self)
+        obj.__entries__ = list(map(_mapper, self))
+        return obj
 
     @overload
     def filter(
         self, pred: Callable[[_DataClass], bool], /
-    ) -> Callable[[_DataClass], bool]:
+    ) -> DataClassSequence[_DataClass]:
         ...
 
     @overload
     def filter(
         self, type_: Type[_T], pred: Callable[[_T], bool], /
-    ) -> Callable[[_DataClass], bool]:
+    ) -> DataClassSequence[_DataClass]:
         ...
 
     @overload
     def filter(
         self, **field_preds: Callable[[_T], bool]
-    ) -> Callable[[_DataClass], bool]:
+    ) -> DataClassSequence[_DataClass]:
         ...
 
     @overload
     def filter(
         self, type_: Type[_U], /, **field_preds: Callable[[_T], bool]
-    ) -> Callable[[_DataClass], bool]:
+    ) -> DataClassSequence[_DataClass]:
         ...
 
     def filter(
@@ -376,4 +379,6 @@ class DataClassSequence(MutableSequence[_DataClass]):
         **field_preds: Callable[[_T], bool],
     ) -> DataClassSequence[_DataClass]:
         _pred = field_pred(type_or_pred, pred, **field_preds)
-        return DataClassSequence(filter(_pred, self))
+        obj = copy.copy(self)
+        obj.__entries__ = list(filter(_pred, self))
+        return obj

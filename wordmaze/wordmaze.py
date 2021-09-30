@@ -1,15 +1,20 @@
 from __future__ import annotations
 
+import copy
+
 import enum
 from functools import partial
 from numbers import Real
-from typing import Any, Callable, Iterable, Optional, Tuple, TypeVar
+from typing import Any, Callable, Iterable, Optional, Tuple, Type, TypeVar, Union, overload
 
 from dataclassy import dataclass
 from dataclassy.functions import replace
 
 from wordmaze.utils.dataclasses import DataClassSequence, as_dict, as_tuple
 from wordmaze.utils.sequences import MutableSequence
+
+_T = TypeVar('_T')
+_U = TypeVar('_U')
 
 
 @dataclass(iter=True, kwargs=True)
@@ -123,30 +128,6 @@ class Page(DataClassSequence[Element]):
 
     def figures(self) -> DataClassSequence[Figure]:
         return self.iter(Figure)
-
-    def map(
-        self,
-        mapper: Optional[Callable[[Element], Element]] = None,
-        /,
-        **field_mappers: Callable[[Any], Any],
-    ) -> Page:
-        return Page(
-            shape=self.shape,
-            origin=self.origin,
-            entries=super().map(mapper, **field_mappers),
-        )
-
-    def filter(
-        self,
-        pred: Optional[Callable[[Element], bool]] = None,
-        /,
-        **field_preds: Callable[[Any], bool],
-    ) -> Page:
-        return Page(
-            shape=self.shape,
-            origin=self.origin,
-            entries=super().filter(pred, **field_preds),
-        )
 
     def rebase(self, origin: Origin) -> Page:
         if origin is self.origin:
