@@ -10,7 +10,6 @@ from dataclassy.functions import replace
 
 from wordmaze.utils.dataclasses import DataClassSequence, as_dict, as_tuple
 from wordmaze.utils.sequences import MutableSequence
-from wordmaze.utils.typing import isa
 
 
 @dataclass(iter=True, kwargs=True)

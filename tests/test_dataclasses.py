@@ -61,6 +61,7 @@ def test_as_tuple() -> None:
 
 
 def test_field_mapper() -> None:
+    text = Text(text='Exit light')
     textbox = TextBox(
         x1=0,
         x2=1,
@@ -70,8 +71,9 @@ def test_field_mapper() -> None:
         confidence=10,
     )
 
-    flipper = field_mapper(
-        lambda tbox: TextBox(
+    @field_mapper
+    def flipper(tbox: TextBox) -> TextBox:
+        return TextBox(
             x1=tbox.x2,
             x2=tbox.x1,
             y1=tbox.y2,
@@ -79,7 +81,7 @@ def test_field_mapper() -> None:
             text=tbox.text[::-1],
             confidence=1 / tbox.confidence,
         )
-    )
+
     assert flipper(textbox) == TextBox(
         x1=1,
         x2=0,
@@ -98,6 +100,24 @@ def test_field_mapper() -> None:
         text='One ring to rule them all',
         confidence=10,
     )
+
+    upper = field_mapper(TextBox, text=str.upper)
+    assert upper(text).text == 'Exit light'
+    assert upper(textbox).text == 'ONE RING TO RULE THEM ALL'
+
+    def _lower(tbox: TextBox) -> TextBox:
+        return TextBox(
+            x1=tbox.x1,
+            x2=tbox.x2,
+            y1=tbox.y1,
+            y2=tbox.y2,
+            text=tbox.text.lower(),
+            confidence=tbox.confidence,
+        )
+
+    lower = field_mapper(TextBox, _lower)
+    assert lower(text).text == 'Exit light'
+    assert lower(textbox).text == 'one ring to rule them all'
 
     with pytest.raises(TypeError):
         field_mapper(
@@ -119,6 +139,7 @@ def test_field_mapper() -> None:
 
 
 def test_field_pred() -> None:
+    text = Text('Elint')
     textbox1 = TextBox(
         x1=0,
         x2=1,
@@ -130,6 +151,7 @@ def test_field_pred() -> None:
     textbox2 = TextBox(
         x1=0, x2=1, y1=10, y2=11, text='One ring to rule no one', confidence=1
     )
+    textbox3 = TextBox(x1=0, x2=1, y1=10, y2=11, text='One', confidence=1)
 
     is_long_confident = field_pred(
         lambda tbox: tbox.confidence > 5 and len(tbox.text) > 5
@@ -142,6 +164,16 @@ def test_field_pred() -> None:
     )
     assert is_long_confident(textbox1)
     assert not is_long_confident(textbox2)
+
+    is_long_textbox = field_pred(TextBox, lambda tbox: len(tbox.text) > 5)
+    assert is_long_textbox(textbox1)
+    assert not is_long_textbox(textbox3)
+    assert is_long_textbox(text)
+
+    is_long_textbox = field_pred(TextBox, text=lambda text: len(text) > 5)
+    assert is_long_textbox(textbox1)
+    assert not is_long_textbox(textbox3)
+    assert is_long_textbox(text)
 
     with pytest.raises(TypeError):
         field_pred(

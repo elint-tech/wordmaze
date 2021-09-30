@@ -6,10 +6,14 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Generic,
     Iterable,
     Optional,
+    Tuple,
     Type,
     TypeVar,
+    Union,
+    overload,
 )
 
 import funcy
@@ -20,8 +24,8 @@ from wordmaze.utils.sequences import MutableSequence
 from wordmaze.utils.typing import isa
 
 _DataClass = TypeVar('_DataClass', bound=DataClass)
-_DataClass2 = TypeVar('_DataClass2', bound=DataClass)
 _T = TypeVar('_T')
+_U = TypeVar('_U')
 
 
 def as_dict(obj: DataClass, *, flatten: bool = False) -> Dict[str, Any]:
@@ -38,7 +42,7 @@ def as_dict(obj: DataClass, *, flatten: bool = False) -> Dict[str, Any]:
         return asdict(obj)
 
 
-def as_tuple(obj: DataClass, *, flatten: bool = False) -> tuple:
+def as_tuple(obj: DataClass, *, flatten: bool = False) -> Tuple[Any, ...]:
     if flatten:
         return funcy.join(
             (
@@ -52,63 +56,79 @@ def as_tuple(obj: DataClass, *, flatten: bool = False) -> tuple:
         return astuple(obj)
 
 
-def field_mapper(
-    mapper: Optional[Callable[[_DataClass], _DataClass]] = None,
-    /,
-    **field_mappers: Callable[[_T], _T],
-) -> Callable[[_DataClass], _DataClass]:
-    if mapper is None and field_mappers:
+class DataClassEntryMapper(Generic[_DataClass]):
+    def __init__(self, mapper: Callable[[_DataClass], _DataClass], /) -> None:
+        self._mapper: Callable[[_DataClass], _DataClass] = mapper
 
+    def __call__(self, obj: _DataClass, /) -> _DataClass:
+        return self._mapper(obj)
+
+    @classmethod
+    def restricted(
+        cls,
+        type_: Type[_T],
+        mapper: Callable[[_T], _DataClass],
+        /,
+    ) -> DataClassEntryMapper[_DataClass]:
+        def _mapper(obj: _DataClass, /) -> _DataClass:
+            if isinstance(obj, type_):
+                return mapper(obj)
+            else:
+                return obj
+
+        return DataClassEntryMapper(_mapper)
+
+    @classmethod
+    def from_field_mappers(
+        cls, **field_mappers: Callable[[_T], _T]
+    ) -> DataClassEntryMapper[_DataClass]:
         def _mapper(obj: _DataClass, /) -> _DataClass:
             obj_dict = as_dict(obj)
 
             if keys_diff := frozenset(field_mappers).difference(obj_dict):
                 raise TypeError(
-                    f'fields {list(keys_diff)} do not exist in object'
+                    f'fields {sorted(keys_diff)} do not exist in object'
                     f' {obj} from the class {type(obj)}.'
                 )
 
-            obj_dict = funcy.project(obj_dict, field_mappers)
             changes = {
-                field_name: _field_mapper(obj_dict[field_name])
-                for field_name, _field_mapper in field_mappers.items()
+                field_name: field_mapper(value)
+                for field_name, (field_mapper, value) in funcy.zip_dicts(
+                    field_mappers, obj_dict
+                )
             }
 
             return replace(obj, **changes)
 
-    elif mapper is not None and not field_mappers:
-        _mapper = mapper
-    else:
-        raise TypeError(
-            textwrap.dedent(
-                '''
-                *field_mapper* accepts either a mapper or keyworded mappers. For instance:
-                    field_mapper(lambda textbox: process_textbox(textbox))
-                    field_mapper(
-                        x1=lambda x1: x1 + 5,
-                        x2=lambda x2: x2**2,
-                        text=lambda text: text.upper()
-                    )
-                '''
-            )
-        )
-
-    return _mapper
+        return DataClassEntryMapper(_mapper)
 
 
-def field_pred(
-    pred: Optional[Callable[[_DataClass], bool]] = None,
-    /,
-    **field_preds: Callable[[Any], bool],
-) -> Callable[[_DataClass], bool]:
-    if pred is None and field_preds:
+class DataClassEntryFilter(Generic[_DataClass]):
+    def __init__(self, pred: Callable[[_DataClass], bool], /) -> None:
+        self._pred: Callable[[_DataClass], bool] = pred
 
+    def __call__(self, obj: _DataClass, /) -> bool:
+        return self._pred(obj)
+
+    @classmethod
+    def restricted(
+        cls, type_: Type[_T], pred: Callable[[_T], bool], /
+    ) -> DataClassEntryFilter[_DataClass]:
+        def _pred(obj: _DataClass, /) -> bool:
+            return not isinstance(obj, type_) or pred(obj)
+
+        return DataClassEntryFilter(_pred)
+
+    @classmethod
+    def from_field_preds(
+        cls, **field_preds: Callable[[_T], bool]
+    ) -> DataClassEntryFilter[_DataClass]:
         def _pred(obj: _DataClass, /) -> bool:
             obj_dict = as_dict(obj)
 
             if keys_diff := frozenset(field_preds).difference(obj_dict):
                 raise TypeError(
-                    f'fields {list(keys_diff)} do not exist in object'
+                    f'fields {sorted(keys_diff)} do not exist in object'
                     f' {obj} from the class {type(obj)}.'
                 )
 
@@ -120,55 +140,240 @@ def field_pred(
 
             return all(preds)
 
-    elif pred is not None and not field_preds:
-        _pred = pred
-    else:
-        raise TypeError(
-            textwrap.dedent(
-                '''
-                invalid call. *field_pred* accepts either a pred or keyworded preds. For instance:
-                field_pred(lambda textbox: process_textbox(textbox))
-                field_pred(
-                    x1=lambda x1: x1 >= 0,
-                    x2=lambda x2: (x2 % 2)==0,
-                    text=lambda text: text.isdigit()
-                )
-                '''
-            )
-        )
+        return DataClassEntryFilter(_pred)
 
-    return _pred
+
+@overload
+def field_mapper(
+    mapper: Callable[[_DataClass], _DataClass], /
+) -> Callable[[_DataClass], _DataClass]:
+    ...
+
+
+@overload
+def field_mapper(
+    type_: Type[_T], mapper: Callable[[_T], _DataClass], /
+) -> Callable[[_DataClass], _DataClass]:
+    ...
+
+
+@overload
+def field_mapper(
+    **field_mappers: Callable[[_T], _T]
+) -> Callable[[_DataClass], _DataClass]:
+    ...
+
+
+@overload
+def field_mapper(
+    type_: Type[_U], /, **field_mappers: Callable[[_T], _T]
+) -> Callable[[_DataClass], _DataClass]:
+    ...
+
+
+def field_mapper(
+    type_or_mapper: Optional[
+        Union[Callable[[_DataClass], _DataClass], Type[_U]]
+    ] = None,
+    mapper: Optional[Callable[[_DataClass], _DataClass]] = None,
+    /,
+    **field_mappers: Callable[[_T], _T],
+) -> Callable[[_DataClass], _DataClass]:
+    if isinstance(type_or_mapper, type):
+        if mapper is not None and not field_mappers:
+            return DataClassEntryMapper.restricted(type_or_mapper, mapper)
+        elif mapper is None and field_mappers:
+            return DataClassEntryMapper.restricted(
+                type_or_mapper, field_mapper(**field_mappers)
+            )
+    elif callable(type_or_mapper) and mapper is None and not field_mappers:
+        return DataClassEntryMapper(type_or_mapper)
+    elif type_or_mapper is None and mapper is None and field_mappers:
+        return DataClassEntryMapper.from_field_mappers(**field_mappers)
+
+    raise TypeError(
+        textwrap.dedent(
+            '*field_mapper* accepts either a mapper or keyworded mappers, '
+            'optionally prepended by a type. '
+            '''
+            For instance:
+                - field_mapper(lambda textbox: process_textbox(textbox))
+                - field_mapper(
+                        TextBox,
+                        lambda textbox: process_textbox(textbox)
+                    )
+                - field_mapper(
+                        x1=lambda x1: x1 + 5,
+                        x2=lambda x2: x2**2,
+                        text=lambda text: text.upper()
+                    )
+                - field_mapper(
+                        TextBox,
+                        x1=lambda x1: x1 + 5,
+                        x2=lambda x2: x2**2,
+                        text=lambda text: text.upper()
+                    )
+            '''
+        )
+    )
+
+
+@overload
+def field_pred(
+    pred: Callable[[_DataClass], bool], /
+) -> Callable[[_DataClass], bool]:
+    ...
+
+
+@overload
+def field_pred(
+    type_: Type[_T], pred: Callable[[_T], bool], /
+) -> Callable[[_DataClass], bool]:
+    ...
+
+
+@overload
+def field_pred(
+    **field_preds: Callable[[_T], bool]
+) -> Callable[[_DataClass], bool]:
+    ...
+
+
+@overload
+def field_pred(
+    type_: Type[_U], /, **field_preds: Callable[[_T], bool]
+) -> Callable[[_DataClass], bool]:
+    ...
+
+
+def field_pred(
+    type_or_pred: Optional[
+        Union[Callable[[_DataClass], bool], Type[_U]]
+    ] = None,
+    pred: Optional[Callable[[_DataClass], bool]] = None,
+    /,
+    **field_preds: Callable[[_T], bool],
+) -> Callable[[_DataClass], bool]:
+    if isinstance(type_or_pred, type):
+        if pred is not None and not field_preds:
+            return DataClassEntryFilter.restricted(type_or_pred, pred)
+        elif pred is None and field_preds:
+            return DataClassEntryFilter.restricted(
+                type_or_pred, field_pred(**field_preds)
+            )
+    elif callable(type_or_pred) and pred is None and not field_preds:
+        return DataClassEntryFilter(type_or_pred)
+    elif type_or_pred is None and pred is None and field_preds:
+        return DataClassEntryFilter.from_field_preds(**field_preds)
+
+    raise TypeError(
+        textwrap.dedent(
+            '*field_pred* accepts either a pred or keyworded preds, '
+            'optionally prepended by a type. '
+            '''
+            For instance:
+                - field_pred(lambda textbox: process_textbox(textbox))
+                - field_pred(
+                        TextBox,
+                        lambda textbox: process_textbox(textbox)
+                    )
+                - field_pred(
+                        x1=lambda x1: x1 + 5,
+                        x2=lambda x2: x2**2,
+                        text=lambda text: text.upper()
+                    )
+                - field_pred(
+                        TextBox,
+                        x1=lambda x1: x1 + 5,
+                        x2=lambda x2: x2**2,
+                        text=lambda text: text.upper()
+                    )
+            '''
+        )
+    )
 
 
 class DataClassSequence(MutableSequence[_DataClass]):
     def __init__(self, entries: Iterable[_DataClass] = ()) -> None:
         super().__init__(entries)
 
-    def iter(
-        self, type_: Type[_DataClass2], /
-    ) -> DataClassSequence[_DataClass2]:
+    def iter(self, type_: Type[_T], /) -> DataClassSequence[_DataClass]:
         return DataClassSequence(filter(isa(type_), self))
 
-    def tuples(self) -> Iterable[tuple]:
+    def tuples(self) -> Iterable[Tuple[Any, ...]]:
         return map(partial(as_tuple, flatten=True), self)
 
-    def dicts(self) -> Iterable[dict]:
+    def dicts(self) -> Iterable[Dict[str, Any]]:
         return map(partial(as_dict, flatten=True), self)
+
+    @overload
+    def map(
+        self, mapper: Callable[[_DataClass], _DataClass], /
+    ) -> Callable[[_DataClass], _DataClass]:
+        ...
+
+    @overload
+    def map(
+        self, type_: Type[_T], mapper: Callable[[_T], _DataClass], /
+    ) -> Callable[[_DataClass], _DataClass]:
+        ...
+
+    @overload
+    def map(
+        self, **field_mappers: Callable[[_T], _T]
+    ) -> Callable[[_DataClass], _DataClass]:
+        ...
+
+    @overload
+    def map(
+        self, type_: Type[_U], /, **field_mappers: Callable[[_T], _T]
+    ) -> Callable[[_DataClass], _DataClass]:
+        ...
 
     def map(
         self,
+        type_or_mapper: Optional[
+            Union[Callable[[_DataClass], _DataClass], Type[_U]]
+        ] = None,
         mapper: Optional[Callable[[_DataClass], _DataClass]] = None,
         /,
-        **field_mappers: Callable[[Any], Any],
+        **field_mappers: Callable[[_T], _T],
     ) -> DataClassSequence[_DataClass]:
-        _mapper = field_mapper(mapper, **field_mappers)
+        _mapper = field_mapper(type_or_mapper, mapper, **field_mappers)
         return DataClassSequence(map(_mapper, self))
+
+    @overload
+    def filter(
+        self, pred: Callable[[_DataClass], bool], /
+    ) -> Callable[[_DataClass], bool]:
+        ...
+
+    @overload
+    def filter(
+        self, type_: Type[_T], pred: Callable[[_T], bool], /
+    ) -> Callable[[_DataClass], bool]:
+        ...
+
+    @overload
+    def filter(
+        self, **field_preds: Callable[[_T], bool]
+    ) -> Callable[[_DataClass], bool]:
+        ...
+
+    @overload
+    def filter(
+        self, type_: Type[_U], /, **field_preds: Callable[[_T], bool]
+    ) -> Callable[[_DataClass], bool]:
+        ...
 
     def filter(
         self,
+        type_or_pred: Optional[
+            Union[Callable[[_DataClass], bool], Type[_U]]
+        ] = None,
         pred: Optional[Callable[[_DataClass], bool]] = None,
         /,
-        **field_preds: Callable[[Any], bool],
+        **field_preds: Callable[[_T], bool],
     ) -> DataClassSequence[_DataClass]:
-        _pred = field_pred(pred, **field_preds)
+        _pred = field_pred(type_or_pred, pred, **field_preds)
         return DataClassSequence(filter(_pred, self))
