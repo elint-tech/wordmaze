@@ -3,6 +3,8 @@ profile = "black"
 known_first_party = ["wordmaze"]
 multi_line_output = 3
 line_length = 79
+float_to_top = true
+remove_redundant_aliases = true
 
 [tool.black]
 include = '\.pyi?$'
@@ -24,3 +26,9 @@ plugins = ["dataclassy.mypy"]
 exclude_lines = [
 	"@overload"
 ]
+
+[tool.commitizen]
+tag_format = "v$major.$minor.$patch$prerelease"
+update_changelog_on_bump = true
+version = "0.3.6"
+version_files = ["VERSION"]

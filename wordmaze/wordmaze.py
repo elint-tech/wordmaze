@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import copy
-
 import enum
 from functools import partial
 from numbers import Real
-from typing import Any, Callable, Iterable, Optional, Tuple, Type, TypeVar, Union, overload
+from typing import Any, Callable, Iterable, Optional, Tuple, TypeVar
 
 from dataclassy import dataclass
 from dataclassy.functions import replace

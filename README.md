@@ -47,7 +47,7 @@ textbox = TextBox(
 
 Perhaps the best example of usage is [`pdfmap.PDFMaze`](https://github.com/elint-tech/pdfmap/blob/e5b3434a63729ba5a737201d93a146f2e0e5ad7a/pdfmap/pdfmaze.py), the first application of WordMaze in a public repository.
 
-The exact expected behaviour of every piece of code in WordMaze can be checked out at the [tests folder](https://github.com/elint-tech/wordmaze/tree/main/tests).
+The exact expected behavior of every piece of code in WordMaze can be checked out at the [tests folder](https://github.com/elint-tech/wordmaze/tree/main/tests).
 
 There are three main groups of objects defined in WordMaze:
 
@@ -77,7 +77,7 @@ print(box.x2) # 3
 print(box.y1) # 10
 print(box.y2) # 22
 # sizes:
-print(box.height) # 12 
+print(box.height) # 12
 print(box.width) # 2
 # midpoints:
 print(box.xmid) # 2
@@ -309,6 +309,62 @@ Install WordMaze from [PyPI](https://pypi.org/project/wordmaze/):
 ```
 pip install wordmaze
 ```
+
+## Versioning
+
+This project uses [semantic versioning](https://semver.org/) with an additional convention: since we are still in initial (unstable) development, the major version is zero: `v0.y.z`; number `y` will be incremented whenever backward incompatible changes are introduced to the API (thus `y` plays the role of the major version for stable APIs), whereas number `z` will be incremented for bug fixes, backward compatible changes, deprecations etc. (this way, `z` combines stable APIs' minor and patch version numbers).
+
+## Contributing
+
+### Setting up your local environment
+
+1. Make sure you have Python 3.8 or greater installed on your machine.
+
+2. Make sure you have [`make`](https://man7.org/linux/man-pages/man1/make.1.html) installed on your machine.
+
+3. Install the development requirements:
+```
+pip install -r requirements-dev.txt
+```
+
+### Making changes
+
+For now, there isn't really a standard for making changes. Try to stick to the pattern you see in the code you are writing. However, we do rely on some automatic refactoring tools, such as [black](https://github.com/psf/black) and [isort](https://github.com/PyCQA/isort). To ensure that your code follows the formatting rules we expect here, you can:
+```sh
+make check
+```
+
+To automatically refactor your code and make sure that you follow all required checks, you can execute:
+```py
+make refactor
+```
+
+When you're done with your changes, and before committing anything, make sure that you didn't break already implemented functionality by running the tests. Tests can be executed with:
+```sh
+make test
+```
+
+Code coverage can be easily inspected with the following command:
+```sh
+make coverage
+```
+
+If your newly implemented functionality reduces code coverage, please add tests to the [tests folder](tests)!
+
+### Committing
+
+WordMaze follows the [Conventional Commits](https://www.conventionalcommits.org/) specification through [Commitizen](https://github.com/commitizen/cz-cli). To automatically refactor and validate your code, and call Commitizen to generate a correct commit message, *instead of* `git commit`, call:
+```sh
+make commit
+```
+
+### Releasing new versions
+
+If you wish to bump the project's version, issue a new git tag and update the changelog file, all of this automatically, just run:
+```sh
+make release
+```
+and everything should happen automagically.
 
 ## Projects using WordMaze
 
