@@ -12,7 +12,7 @@ coverage:
 	@coverage report -m
 
 test:
-	@pytest
+	@pytest --doctest-modules
 
 tox:
 	@tox
