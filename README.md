@@ -344,6 +344,11 @@ When you're done with your changes, and before committing anything, make sure th
 make test
 ```
 
+Moreover, you can test the project against all supported Python versions with [tox](https://tox.wiki/en/latest/index.html):
+```sh
+make tox
+```
+
 Code coverage can be easily inspected with the following command:
 ```sh
 make coverage
