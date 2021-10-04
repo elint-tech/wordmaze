@@ -14,6 +14,9 @@ coverage:
 test:
 	@pytest
 
+tox:
+	@tox
+
 check:
 	@$(call $(.CHECK))
 

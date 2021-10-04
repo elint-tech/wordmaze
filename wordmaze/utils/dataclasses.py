@@ -176,7 +176,7 @@ def field_mapper(
     type_or_mapper: Optional[
         Union[Callable[[_DataClass], _DataClass], Type[_U]]
     ] = None,
-    mapper: Optional[Callable[[_DataClass], _DataClass]] = None,
+    mapper: Optional[Callable[[_U], _DataClass]] = None,
     /,
     **field_mappers: Callable[[_T], _T],
 ) -> Callable[[_DataClass], _DataClass]:

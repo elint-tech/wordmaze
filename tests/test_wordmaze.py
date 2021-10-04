@@ -262,14 +262,14 @@ def test_wordmaze():
 
 def test_Figures_and_Textboxes_in_Page() -> None:
     textbox1 = TextBox(
-        x1=1, x2=2, y1=3, y2=4, text="Sicher the wizard", confidence=0.8
+        x1=1, x2=2, y1=3, y2=4, text='Sicher the wizard', confidence=0.8
     )
 
     figure1 = Figure(
         x1=1, x2=2, y1=3, y2=4, content=b'\x00\x00\x00\x00', image_type='png'
     )
     textbox2 = TextBox(
-        x1=1, x2=2, y1=3, y2=4, text="Sicher the wizard", confidence=0.8
+        x1=1, x2=2, y1=3, y2=4, text='Sicher the wizard', confidence=0.8
     )
 
     page = Page(
