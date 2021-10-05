@@ -7,31 +7,39 @@
 .READD = $(shell git update-index --again)
 .CHECK = $(shell pre-commit run)
 
+.PHONY: coverage
 coverage:
 	@coverage run --source=wordmaze/ -m pytest tests/
 	@coverage report -m
 
+.PHONY: test
 test:
 	@pytest --doctest-modules
 
+.PHONY: tox
 tox:
 	@tox
 
+.PHONY: check
 check:
 	@$(call $(.CHECK))
 
+.PHONY: refactor
 refactor:
 	@$(call $(.REFACTOR))
 
+.PHONY: autofix
 autofix:
 	@-$(call $(.REFACTOR))
 	@$(call $(.READD))
 	@-$(call $(.CHECK))
 	@$(call $(.READD))
 
+.PHONY: commit
 commit: autofix
 	@cz commit
 
+.PHONY: release
 release:
 # for v1.0.0 and after, the following line should be used to bump the project version:
 # 	cz bump
